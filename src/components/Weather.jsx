@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import "./Weather.css";
 import search_icon from "../assets/search.png";
 import clear_icon from "../assets/clear.png";
@@ -11,12 +11,10 @@ import humidity_icon from "../assets/humidity.png";
 
 function Weather() {
   const [weatherData, setWeatherData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef();
 
-  useEffect(() => {
-    search(" ");
-  }, []);
-
+  // Weather icons mapping
   const allIcons = {
     "01d": clear_icon,
     "01n": clear_icon,
@@ -34,21 +32,23 @@ function Weather() {
     "13n": snow_icon,
   };
 
-  const search = async (city) => {
+  // Search function to fetch weather data
+  const search = useCallback(async (city) => {
     if (city.trim() === "") {
       alert("Enter a city name");
       return;
     }
+    setIsLoading(true);
     try {
       const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=8f8bea7703ea7dfdc15d53f1cb40cd42`;
       const response = await fetch(url);
       const data = await response.json();
       if (!response.ok) {
         alert(data.message);
+        setIsLoading(false);
         return;
       }
-      console.log(data);
-      const icon = allIcons[data.weather[0].icon] || clear_icon;
+      const icon = allIcons[data.weather[0]?.icon] || clear_icon;
       setWeatherData({
         humidity: data.main.humidity,
         windSpeed: data.wind.speed,
@@ -57,10 +57,17 @@ function Weather() {
         icon: icon,
       });
     } catch (error) {
+      console.error("Error fetching weather data:", error);
       setWeatherData(null);
-      console.log("Error fetching weather data:", error);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch default city's weather data on component mount
+  useEffect(() => {
+    search("New York");
+  }, [search]);
 
   return (
     <div className="weather">
@@ -72,9 +79,15 @@ function Weather() {
           onClick={() => search(inputRef.current.value)}
         />
       </div>
-      {weatherData ? (
+      {isLoading ? (
+        <p className="loading">Loading...</p>
+      ) : weatherData ? (
         <>
-          <img src={weatherData.icon} alt="Weather Icon" className="weather-icon" />
+          <img
+            src={weatherData.icon}
+            alt="Weather Icon"
+            className="weather-icon"
+          />
           <p className="temperature">{weatherData.temperature}°C</p>
           <p className="location">{weatherData.location}</p>
           <div className="weather-data">
