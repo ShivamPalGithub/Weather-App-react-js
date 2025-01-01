@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import "./Weather.css";
 import search_icon from "../assets/search.png";
 import clear_icon from "../assets/clear.png";
@@ -14,8 +14,8 @@ function Weather() {
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef();
 
-  // Weather icons mapping
-  const allIcons = {
+  // Weather icons mapping with useMemo
+  const allIcons = useMemo(() => ({
     "01d": clear_icon,
     "01n": clear_icon,
     "02d": cloud_icon,
@@ -30,7 +30,7 @@ function Weather() {
     "10n": rain_icon,
     "13d": snow_icon,
     "13n": snow_icon,
-  };
+  }), []);
 
   // Search function to fetch weather data
   const search = useCallback(async (city) => {
@@ -62,7 +62,7 @@ function Weather() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [allIcons]);
 
   // Fetch default city's weather data on component mount
   useEffect(() => {
